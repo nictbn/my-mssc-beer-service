@@ -1,13 +1,11 @@
 package guru.springframework.mymsscbeerservice.services.inventory;
 
 import guru.springframework.mymsscbeerservice.bootstrap.BeerLoader;
+import org.junit.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 @Disabled
 @SpringBootTest
@@ -20,7 +18,8 @@ class BeerInventoryServiceRestTemplateImplTest {
 
     @Test
     void getOnHandInventory() {
-        Integer qoh = beerInventoryService.getOnHandInventory(BeerLoader.BEER_1_UUID);
-        System.out.println(qoh);
+        // TODO USE UPC INSTEAD OF UUID
+//        Integer qoh = beerInventoryService.getOnHandInventory(BeerLoader.BEER_1_UUID);
+//        System.out.println(qoh);
     }
 }
