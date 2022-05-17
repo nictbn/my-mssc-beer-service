@@ -2,7 +2,7 @@ package guru.springframework.mymsscbeerservice.bootstrap;
 
 import guru.springframework.mymsscbeerservice.domain.Beer;
 import guru.springframework.mymsscbeerservice.repositories.BeerRepository;
-import guru.springframework.mymsscbeerservice.web.model.BeerStyleEnum;
+import guru.sfg.brewery.model.BeerStyleEnum;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
