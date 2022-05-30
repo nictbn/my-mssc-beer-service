@@ -5,12 +5,16 @@
     <parent>
         <groupId>com.github.sfg-beer-works</groupId>
         <artifactId>sfg-brewery-bom</artifactId>
-        <version>1.0.13</version>
+        <version>1.0.17</version>
     </parent>
     <artifactId>my-mssc-beer-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>my-mssc-beer-service</name>
     <description>my-mssc-beer-service</description>
+
+    <properties>
+        <docker.image.prefix>nictbn</docker.image.prefix>
+    </properties>
 
     <dependencies>
         <dependency>
