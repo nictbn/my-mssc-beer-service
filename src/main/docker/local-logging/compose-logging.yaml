@@ -16,10 +16,10 @@ services:
   filebeat:
     image: docker.elastic.co/beats/filebeat:7.7.0
     volumes:
-      - ./filebeat/filebeat.docker.yml:/usr/share/fiebeat/filebeat.yml:ro
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-    user: root
+      - ./filebeat/filebeat.docker.yml:/usr/share/filebeat/filebeat.yml:ro # Configuration file
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro           # Docker logs
+      - /var/run/docker.sock:/var/run/docker.sock:ro                       # Additional information about containers
+    user: root                                                             # Allow access to log files and docker.sock
     restart: on-failure
   jms:
     image: vromero/activemq-artemis
@@ -37,14 +37,13 @@ services:
   config:
     image: nictbn/mssc-config-server
     ports:
-      - 8989:8989
+      - 8888:8888
     depends_on:
       - eureka
     environment:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://netflix:eureka@eureka:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: 'true'
-      SERVER_PORT: 8989
-  inventory-service:
+  inventory:
     image: nictbn/mssc-beer-inventory-service
     ports:
       - 8082:8082
@@ -53,13 +52,12 @@ services:
       - config
       - jms
     environment:
+      SPRING_PROFILES_ACTIVE: local-discovery,localmysql
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://netflix:eureka@eureka:8761/eureka/
-      EUREKA_INSTANCE_PREFER_IP_ADDRESS: 'true'
-      SPRING_PROFILES_ACTIVE: localmysql,local-discovery
       SPRING_ZIPKIN_BASEURL: http://zipkin
-      SPRING_ARTEMIS_HOST: jms
       SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/beerinventoryservice?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
-      SPRING_CLOUD_CONFIG_DISCOVERY_SERVICEID: mssc-brewery-config
+      SPRING_ARTEMIS_HOST: jms
+      EUREKA_INSTANCE_PREFER_IP_ADDRESS: 'true'
     restart: on-failure
     labels:
       collect_logs_with_filebeat: "true"
@@ -67,14 +65,13 @@ services:
   inventory-failover:
     image: nictbn/mssc-inventory-failover
     ports:
-      - 8003:8003
+      - 8083:8083
     depends_on:
       - eureka
       - config
     environment:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://netflix:eureka@eureka:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: 'true'
-    restart: on-failure
   beer-service:
     image: nictbn/my-mssc-beer-service
     ports:
@@ -82,16 +79,16 @@ services:
     depends_on:
       - eureka
       - config
+      - inventory
       - jms
-      - inventory-service
+    restart: on-failure
     environment:
+      SPRING_PROFILES_ACTIVE: local-discovery,localmysql
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://netflix:eureka@eureka:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: 'true'
-      SPRING_PROFILES_ACTIVE: local-discovery,localmysql
       SPRING_ZIPKIN_BASEURL: http://zipkin
-      SPRING_ARTEMIS_HOST: jms
       SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/beerservice?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
-    restart: on-failure
+      SPRING_ARTEMIS_HOST: jms
     labels:
       collect_logs_with_filebeat: "true"
       decode_log_event_to_json_object: "true"
@@ -102,17 +99,17 @@ services:
     depends_on:
       - eureka
       - config
-      - jms
       - beer-service
+      - jms
+    restart: on-failure
     environment:
+      SPRING_PROFILES_ACTIVE: local-discovery,localmysql
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://netflix:eureka@eureka:8761/eureka/
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: 'true'
-      SPRING_PROFILES_ACTIVE: local-discovery,localmysql
       SPRING_ZIPKIN_BASEURL: http://zipkin
-      SPRING_ARTEMIS_HOST: jms
       SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/beerorderservice?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
+      SPRING_ARTEMIS_HOST: jms
       SFG_BREWERY_BEER-SERVICE-HOST: http://beer-service:8080
-    restart: on-failure
     labels:
       collect_logs_with_filebeat: "true"
       decode_log_event_to_json_object: "true"
@@ -123,15 +120,14 @@ services:
     depends_on:
       - eureka
       - config
-      - inventory-service
+      - inventory
       - beer-service
       - order-service
       - inventory-failover
-    environment:
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://netflix:eureka@eureka:8761/eureka/
-      EUREKA_INSTANCE_PREFER_IP_ADDRESS: 'true'
-      SPRING_PROFILES_ACTIVE: local-discovery
     restart: on-failure
+    environment:
+      SPRING_PROFILES_ACTIVE: local-discovery
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://netflix:eureka@eureka:8761/eureka/
     labels:
       collect_logs_with_filebeat: "true"
       decode_log_event_to_json_object: "true"
